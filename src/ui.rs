@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 #[derive(Component)]
 enum UiButton {
-  SelectCell { cell: u8 },
+    SelectCell { cell: u8 },
 }
 
 pub struct UiTheme {
@@ -31,10 +31,7 @@ impl FromWorld for UiTheme {
 
 pub fn button_system(
     theme: Res<UiTheme>,
-    mut buttons: Query<
-        (&Interaction, &mut UiColor),
-        (Changed<Interaction>, With<Button>),
-    >,
+    mut buttons: Query<(&Interaction, &mut UiColor), (Changed<Interaction>, With<Button>)>,
 ) {
     for (interaction, mut material) in buttons.iter_mut() {
         match *interaction {
@@ -59,11 +56,34 @@ pub fn root(theme: &Res<UiTheme>) -> NodeBundle {
     }
 }
 
-pub fn border(theme: &Res<UiTheme>) -> NodeBundle {
+pub fn main_border(theme: &Res<UiTheme>) -> NodeBundle {
     NodeBundle {
         style: Style {
-            size: Size::new(Val::Px(400.0), Val::Auto),
-            border: Rect::all(Val::Px(8.0)),
+            size: Size::new(Val::Auto, Val::Auto),
+            border: Rect::all(Val::Px(2.0)),
+            flex_direction: FlexDirection::ColumnReverse,
+            ..Default::default()
+        },
+        color: theme.border.clone(),
+        ..Default::default()
+    }
+}
+
+pub fn square_row() -> NodeBundle {
+    NodeBundle {
+        style: Style {
+            size: Size::new(Val::Auto, Val::Auto),
+            ..Default::default()
+        },
+        ..Default::default()
+    }
+}
+
+pub fn square_border(theme: &Res<UiTheme>) -> NodeBundle {
+    NodeBundle {
+        style: Style {
+            size: Size::new(Val::Px(50.0), Val::Px(50.0)),
+            border: Rect::all(Val::Px(2.0)),
             ..Default::default()
         },
         color: theme.border.clone(),
@@ -102,7 +122,7 @@ pub fn button(theme: &Res<UiTheme>) -> ButtonBundle {
 pub fn button_text(
     asset_server: &Res<AssetServer>,
     theme: &Res<UiTheme>,
-    label: &str,
+    label: String,
 ) -> TextBundle {
     return TextBundle {
         style: Style {
@@ -122,33 +142,31 @@ pub fn button_text(
     };
 }
 
-pub fn setup_ui(
-  mut commands: Commands,
-  asset_server: Res<AssetServer>,
-  theme: Res<UiTheme>,
-) {
-  commands.spawn_bundle(UiCameraBundle::default());
+pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, theme: Res<UiTheme>) {
+    commands.spawn_bundle(UiCameraBundle::default());
 
-  commands
-      .spawn_bundle(root(&theme))
-      .with_children(|parent| {
-          parent
-              .spawn_bundle(border(&theme))
-              .with_children(|parent| {
-                  parent
-                      .spawn_bundle(menu_background(&theme))
-                      .with_children(|parent| {
-                          parent
-                              .spawn_bundle(button(&theme))
-                              .with_children(|parent| {
-                                  parent.spawn_bundle(button_text(
-                                      &asset_server,
-                                      &theme,
-                                      "New Game",
-                                  ));
-                              })
-                              .insert(UiButton::SelectCell { cell: 1 });
-                      });
-              });
-      });
+    commands.spawn_bundle(root(&theme)).with_children(|parent| {
+        parent
+            .spawn_bundle(main_border(&theme))
+            .with_children(|parent| {
+                for row_index in 0..3 {
+                    parent.spawn_bundle(square_row())
+                    .with_children(|parent| {
+                        for column_index in 1..=3 {
+                            let cell = 3 * row_index + column_index;
+                            parent
+                                .spawn_bundle(square_border(&theme))
+                                .with_children(|parent| {
+                                    parent
+                                        .spawn_bundle(button(&theme))
+                                        .with_children(|parent| {
+                                            parent.spawn_bundle(button_text(&asset_server, &theme, cell.to_string()));
+                                        })
+                                        .insert(UiButton::SelectCell { cell });
+                                });
+                        }
+                    });
+                }
+            });
+    });
 }
