@@ -1,8 +1,22 @@
 use bevy::prelude::*;
 
+use crate::PlayerTurn;
+
+pub struct CellClickedEvent {
+    entity: Entity,
+}
+
+#[derive(PartialEq)]
+pub enum CellState {
+    Empty,
+    X,
+    O,
+}
+
 #[derive(Component)]
-enum UiButton {
-    SelectCell { cell: u8 },
+pub struct TicTacToeCell {
+    pub cell_id: u8,
+    pub state: CellState,
 }
 
 pub struct UiTheme {
@@ -16,7 +30,7 @@ pub struct UiTheme {
 }
 
 impl FromWorld for UiTheme {
-    fn from_world(world: &mut World) -> Self {
+    fn from_world(_: &mut World) -> Self {
         UiTheme {
             root: Color::NONE.into(),
             border: Color::rgb(0.65, 0.65, 0.65).into(),
@@ -29,17 +43,80 @@ impl FromWorld for UiTheme {
     }
 }
 
-pub fn button_system(
+pub fn board_cell_interaction_system(
     theme: Res<UiTheme>,
-    mut buttons: Query<(&Interaction, &mut UiColor), (Changed<Interaction>, With<Button>)>,
+    mut send_cell_clicked: EventWriter<CellClickedEvent>,
+    mut buttons: Query<
+        (&Interaction, &mut UiColor, &TicTacToeCell, Entity),
+        (Changed<Interaction>, With<Button>),
+    >,
 ) {
-    for (interaction, mut material) in buttons.iter_mut() {
+    for (interaction, mut color, cell, entity) in buttons.iter_mut() {
+        if cell.state != CellState::Empty {
+            return;
+        }
+
         match *interaction {
-            Interaction::Clicked => *material = theme.button_pressed,
-            Interaction::Hovered => *material = theme.button_hovered,
-            Interaction::None => *material = theme.button,
+            Interaction::Clicked => {
+                send_cell_clicked.send(CellClickedEvent { entity });
+                *color = theme.button;
+            }
+            Interaction::Hovered => *color = theme.button_hovered,
+            Interaction::None => *color = theme.button,
         }
     }
+}
+
+pub fn on_cell_clicked(
+    mut events: EventReader<CellClickedEvent>,
+    mut cell_query: Query<(&mut TicTacToeCell, &Children)>,
+    mut cell_text_query: Query<&mut Text>,
+    mut player_turn_state: ResMut<State<PlayerTurn>>,
+) {
+    let player_turn = player_turn_state.current().clone();
+
+    for event in events.iter() {
+        let (mut cell, children) = cell_query
+            .get_mut(event.entity)
+            .expect("on_cell_clicked: Cell not found.");
+
+        update_cell_state(&mut cell, &player_turn);
+        update_cell_text(&mut cell_text_query, children, &player_turn);
+        update_player_turn(&mut player_turn_state);
+    }
+}
+
+fn update_cell_state(cell: &mut Mut<TicTacToeCell>, player_turn: &PlayerTurn,) {
+    cell.state = match player_turn {
+        PlayerTurn::X => CellState::X,
+        PlayerTurn::O => CellState::O,
+    };
+}
+
+fn update_cell_text(
+    cell_text_query: &mut Query<&mut Text>,
+    children: &Children,
+    player_turn: &PlayerTurn,
+) {
+    let text = match player_turn {
+        PlayerTurn::X => "X",
+        PlayerTurn::O => "O",
+    };
+
+    for child in children.iter() {
+        if let Ok(mut cell_text) = cell_text_query.get_mut(*child) {
+            cell_text.sections[0].value = text.to_string();
+        }
+    }
+}
+
+fn update_player_turn(player_turn_state: &mut ResMut<State<PlayerTurn>>,) {
+    let player_turn = player_turn_state.current().clone();
+    let next_state = match player_turn {
+        PlayerTurn::X => PlayerTurn::O,
+        PlayerTurn::O => PlayerTurn::X,
+    };
+    player_turn_state.set(next_state).unwrap()
 }
 
 pub fn root(theme: &Res<UiTheme>) -> NodeBundle {
@@ -122,13 +199,9 @@ pub fn button(theme: &Res<UiTheme>) -> ButtonBundle {
 pub fn button_text(
     asset_server: &Res<AssetServer>,
     theme: &Res<UiTheme>,
-    label: String,
+    label: &str,
 ) -> TextBundle {
     return TextBundle {
-        style: Style {
-            margin: Rect::all(Val::Px(10.0)),
-            ..Default::default()
-        },
         text: Text::with_section(
             label,
             TextStyle {
@@ -142,7 +215,7 @@ pub fn button_text(
     };
 }
 
-pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, theme: Res<UiTheme>) {
+pub fn setup_board(mut commands: Commands, theme: Res<UiTheme>, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(UiCameraBundle::default());
 
     commands.spawn_bundle(root(&theme)).with_children(|parent| {
@@ -150,19 +223,25 @@ pub fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>, theme: R
             .spawn_bundle(main_border(&theme))
             .with_children(|parent| {
                 for row_index in 0..3 {
-                    parent.spawn_bundle(square_row())
-                    .with_children(|parent| {
+                    parent.spawn_bundle(square_row()).with_children(|parent| {
                         for column_index in 1..=3 {
-                            let cell = 3 * row_index + column_index;
+                            let cell_id = 3 * row_index + column_index;
                             parent
                                 .spawn_bundle(square_border(&theme))
                                 .with_children(|parent| {
                                     parent
                                         .spawn_bundle(button(&theme))
                                         .with_children(|parent| {
-                                            parent.spawn_bundle(button_text(&asset_server, &theme, cell.to_string()));
+                                            parent.spawn_bundle(button_text(
+                                                &asset_server,
+                                                &theme,
+                                                "",
+                                            ));
                                         })
-                                        .insert(UiButton::SelectCell { cell });
+                                        .insert(TicTacToeCell {
+                                            cell_id,
+                                            state: CellState::Empty,
+                                        });
                                 });
                         }
                     });
