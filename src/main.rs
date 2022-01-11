@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 mod states;
 pub use states::*;
+mod components;
+pub use components::*;
 mod board;
 pub use board::*;
 

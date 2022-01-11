@@ -1,22 +1,9 @@
 use bevy::prelude::*;
 
-use crate::PlayerTurn;
+use crate::{PlayerTurn, CellState, TicTacToeCell};
 
 pub struct CellClickedEvent {
     entity: Entity,
-}
-
-#[derive(PartialEq)]
-pub enum CellState {
-    Empty,
-    X,
-    O,
-}
-
-#[derive(Component)]
-pub struct TicTacToeCell {
-    pub cell_id: u8,
-    pub state: CellState,
 }
 
 pub struct UiTheme {
