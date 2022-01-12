@@ -1,6 +1,21 @@
 use bevy::prelude::*;
 
-use crate::{PlayerTurn, CellState, TicTacToeCell};
+use crate::{CellState, GameState, PlayerTurn, TicTacToeCell, WinnerState};
+
+pub struct BoardPlugin;
+
+impl Plugin for BoardPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<UiTheme>()
+            .add_event::<CellClickedEvent>()
+            .add_system_set(SystemSet::on_enter(GameState::Local).with_system(setup_board))
+            .add_system_set(
+                SystemSet::on_update(WinnerState::GameOngoing)
+                    .with_system(board_cell_interaction_system)
+                    .with_system(on_cell_clicked),
+            );
+    }
+}
 
 pub struct CellClickedEvent {
     entity: Entity,
@@ -73,7 +88,7 @@ pub fn on_cell_clicked(
     }
 }
 
-fn update_cell_state(cell: &mut Mut<TicTacToeCell>, player_turn: &PlayerTurn,) {
+fn update_cell_state(cell: &mut Mut<TicTacToeCell>, player_turn: &PlayerTurn) {
     cell.state = match player_turn {
         PlayerTurn::X => CellState::X,
         PlayerTurn::O => CellState::O,
@@ -97,7 +112,7 @@ fn update_cell_text(
     }
 }
 
-fn update_player_turn(player_turn_state: &mut ResMut<State<PlayerTurn>>,) {
+fn update_player_turn(player_turn_state: &mut ResMut<State<PlayerTurn>>) {
     let player_turn = player_turn_state.current().clone();
     let next_state = match player_turn {
         PlayerTurn::X => PlayerTurn::O,
@@ -212,7 +227,7 @@ pub fn setup_board(mut commands: Commands, theme: Res<UiTheme>, asset_server: Re
                 for row_index in 0..3 {
                     parent.spawn_bundle(square_row()).with_children(|parent| {
                         for column_index in 1..=3 {
-                            let cell_id = 3 * row_index + column_index;
+                            let cell_id = 3 * row_index + column_index - 1;
                             parent
                                 .spawn_bundle(square_border(&theme))
                                 .with_children(|parent| {

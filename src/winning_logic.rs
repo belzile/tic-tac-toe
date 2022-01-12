@@ -1,0 +1,89 @@
+use bevy::prelude::*;
+
+use crate::{CellState, TicTacToeCell, WinnerState};
+
+const WINNING_COMBINATIONS: [[usize; 3]; 8] = [
+    // horizontal
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    // vertical
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    // diagonals
+    [0, 4, 8],
+    [2, 4, 6],
+];
+
+pub struct WinningLogicPlugin;
+
+impl Plugin for WinningLogicPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system_set(
+            SystemSet::on_update(WinnerState::GameOngoing).with_system(is_game_over),
+        );
+    }
+}
+
+pub fn is_game_over(
+    cells_query: Query<&TicTacToeCell>,
+    mut update_winner: ResMut<State<WinnerState>>,
+) {
+    let mut cells = vec![CellState::Empty; 9];
+    for cell in cells_query.iter() {
+        cells[cell.cell_id as usize] = cell.state.clone();
+    }
+
+    if is_winner(&cells, CellState::X) {
+        update_winner
+            .set(WinnerState::XWon)
+            .expect("Cannot update winner state");
+    } else if is_winner(&cells, CellState::O) {
+        update_winner
+            .set(WinnerState::OWon)
+            .expect("Cannot update winner state");
+    } else if is_draw(&cells) {
+        update_winner
+            .set(WinnerState::Draw)
+            .expect("Cannot update winner state");
+    }
+}
+
+fn is_winner(cells: &Vec<CellState>, state: CellState) -> bool {
+    for winning_combination in WINNING_COMBINATIONS {
+        if cells[winning_combination[0]] == state
+            && cells[winning_combination[1]] == state
+            && cells[winning_combination[2]] == state
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+fn is_draw(cells: &Vec<CellState>) -> bool {
+    !cells.iter().any(|element| *element == CellState::Empty)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case(vec![CellState::X, CellState::O], true)]
+    #[test_case(vec![CellState::X, CellState::Empty], false)]
+    fn test_is_draw(input: Vec<CellState>, expected: bool) {
+        assert_eq!(is_draw(&input), expected);
+    }
+
+    #[test_case(vec![CellState::X, CellState::X, CellState::X, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty], CellState::X, true)]
+    #[test_case(vec![CellState::Empty, CellState::Empty, CellState::Empty, CellState::X, CellState::X, CellState::X, CellState::Empty, CellState::Empty, CellState::Empty], CellState::X, true)]
+    #[test_case(vec![CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::X, CellState::X, CellState::X], CellState::X, true)]
+    #[test_case(vec![CellState::X, CellState::Empty, CellState::Empty, CellState::X, CellState::Empty, CellState::Empty, CellState::X, CellState::Empty, CellState::Empty], CellState::X, true)]
+    #[test_case(vec![CellState::X, CellState::O, CellState::X, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty], CellState::X, false)]
+    fn test_is_winner(input: Vec<CellState>, state: CellState, expected: bool) {
+        assert_eq!(is_winner(&input, state), expected);
+    }
+}

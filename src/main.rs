@@ -6,6 +6,12 @@ mod components;
 pub use components::*;
 mod board;
 pub use board::*;
+mod winning_logic;
+pub use winning_logic::*;
+mod game_instructions;
+pub use game_instructions::*;
+mod new_game;
+pub use new_game::*;
 
 fn main() {
     App::new()
@@ -17,11 +23,12 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
-        .init_resource::<UiTheme>()
+        .add_state(GameState::Local)
         .add_state(PlayerTurn::X)
-        .add_event::<CellClickedEvent>()
-        .add_startup_system(setup_board)
-        .add_system(board_cell_interaction_system)
-        .add_system(on_cell_clicked)
+        .add_state(WinnerState::GameOngoing)
+        .add_plugin(BoardPlugin)
+        .add_plugin(WinningLogicPlugin)
+        .add_plugin(GameInstructionsPlugin)
+        .add_plugin(NewGamePlugin)
         .run();
 }
