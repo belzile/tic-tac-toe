@@ -1,4 +1,10 @@
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub enum Player {
+    X,
+    O
+}
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum PlayerTurn {
     X,
     O,
@@ -7,8 +13,7 @@ pub enum PlayerTurn {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum CellState {
     Empty,
-    X,
-    O,
+    Filled(Player),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]

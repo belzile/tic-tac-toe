@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, TicTacToeCell, WinnerState};
+use crate::{CellState, TicTacToeCell, WinnerState, Player};
 
 const WINNING_COMBINATIONS: [[usize; 3]; 8] = [
     // horizontal
@@ -35,11 +35,11 @@ pub fn is_game_over(
         cells[cell.cell_id as usize] = cell.state.clone();
     }
 
-    if is_winner(&cells, CellState::X) {
+    if is_winner(&cells, Player::X) {
         update_winner
             .set(WinnerState::XWon)
             .expect("Cannot update winner state");
-    } else if is_winner(&cells, CellState::O) {
+    } else if is_winner(&cells, Player::O) {
         update_winner
             .set(WinnerState::OWon)
             .expect("Cannot update winner state");
@@ -50,7 +50,8 @@ pub fn is_game_over(
     }
 }
 
-fn is_winner(cells: &Vec<CellState>, state: CellState) -> bool {
+fn is_winner(cells: &Vec<CellState>, player: Player) -> bool {
+    let state = CellState::Filled(player);
     for winning_combination in WINNING_COMBINATIONS {
         if cells[winning_combination[0]] == state
             && cells[winning_combination[1]] == state
@@ -72,18 +73,18 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    #[test_case(vec![CellState::X, CellState::O], true)]
-    #[test_case(vec![CellState::X, CellState::Empty], false)]
+    #[test_case(vec![CellState::Filled(Player::X), CellState::Filled(Player::O)], true)]
+    #[test_case(vec![CellState::Filled(Player::X), CellState::Empty], false)]
     fn test_is_draw(input: Vec<CellState>, expected: bool) {
         assert_eq!(is_draw(&input), expected);
     }
 
-    #[test_case(vec![CellState::X, CellState::X, CellState::X, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty], CellState::X, true)]
-    #[test_case(vec![CellState::Empty, CellState::Empty, CellState::Empty, CellState::X, CellState::X, CellState::X, CellState::Empty, CellState::Empty, CellState::Empty], CellState::X, true)]
-    #[test_case(vec![CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::X, CellState::X, CellState::X], CellState::X, true)]
-    #[test_case(vec![CellState::X, CellState::Empty, CellState::Empty, CellState::X, CellState::Empty, CellState::Empty, CellState::X, CellState::Empty, CellState::Empty], CellState::X, true)]
-    #[test_case(vec![CellState::X, CellState::O, CellState::X, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty], CellState::X, false)]
-    fn test_is_winner(input: Vec<CellState>, state: CellState, expected: bool) {
-        assert_eq!(is_winner(&input, state), expected);
+    #[test_case(vec![CellState::Filled(Player::X), CellState::Filled(Player::X), CellState::Filled(Player::X), CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty], Player::X, true)]
+    #[test_case(vec![CellState::Empty, CellState::Empty, CellState::Empty, CellState::Filled(Player::X), CellState::Filled(Player::X), CellState::Filled(Player::X), CellState::Empty, CellState::Empty, CellState::Empty], Player::X, true)]
+    #[test_case(vec![CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Filled(Player::X), CellState::Filled(Player::X), CellState::Filled(Player::X)], Player::X, true)]
+    #[test_case(vec![CellState::Filled(Player::X), CellState::Empty, CellState::Empty, CellState::Filled(Player::X), CellState::Empty, CellState::Empty, CellState::Filled(Player::X), CellState::Empty, CellState::Empty], Player::X, true)]
+    #[test_case(vec![CellState::Filled(Player::X), CellState::Filled(Player::O), CellState::Filled(Player::X), CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty, CellState::Empty], Player::X, false)]
+    fn test_is_winner(input: Vec<CellState>, player: Player, expected: bool) {
+        assert_eq!(is_winner(&input, player), expected);
     }
 }

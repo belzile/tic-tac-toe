@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, GameState, PlayerTurn, TicTacToeCell, WinnerState};
+use crate::{CellState, GameState, PlayerTurn, TicTacToeCell, WinnerState, Player};
 
 pub struct BoardPlugin;
 
@@ -90,8 +90,8 @@ pub fn on_cell_clicked(
 
 fn update_cell_state(cell: &mut Mut<TicTacToeCell>, player_turn: &PlayerTurn) {
     cell.state = match player_turn {
-        PlayerTurn::X => CellState::X,
-        PlayerTurn::O => CellState::O,
+        PlayerTurn::X => CellState::Filled(Player::X),
+        PlayerTurn::O => CellState::Filled(Player::O),
     };
 }
 
