@@ -17,14 +17,14 @@ pub enum CellState {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum WinnerState {
+pub enum GameState {
     Won(Player),
     Draw,
     GameOngoing,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum GameState {
+pub enum PlayingState {
     NotPlaying,
     Local,
 }

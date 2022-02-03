@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, TicTacToeCell, WinnerState, Player};
+use crate::{CellState, TicTacToeCell, GameState, Player};
 
 const WINNING_COMBINATIONS: [[usize; 3]; 8] = [
     // horizontal
@@ -21,14 +21,14 @@ pub struct WinningLogicPlugin;
 impl Plugin for WinningLogicPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_update(WinnerState::GameOngoing).with_system(is_game_over),
+            SystemSet::on_update(GameState::GameOngoing).with_system(is_game_over),
         );
     }
 }
 
 pub fn is_game_over(
     cells_query: Query<&TicTacToeCell>,
-    mut update_winner: ResMut<State<WinnerState>>,
+    mut update_winner: ResMut<State<GameState>>,
 ) {
     let mut cells = vec![CellState::Empty; 9];
     for cell in cells_query.iter() {
@@ -37,15 +37,15 @@ pub fn is_game_over(
 
     if is_winner(&cells, Player::X) {
         update_winner
-            .set(WinnerState::Won(Player::X))
+            .set(GameState::Won(Player::X))
             .expect("Cannot update winner state");
     } else if is_winner(&cells, Player::O) {
         update_winner
-            .set(WinnerState::Won(Player::O))
+            .set(GameState::Won(Player::O))
             .expect("Cannot update winner state");
     } else if is_draw(&cells) {
         update_winner
-            .set(WinnerState::Draw)
+            .set(GameState::Draw)
             .expect("Cannot update winner state");
     }
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, GameState, PlayerTurn, TicTacToeCell, WinnerState, Player};
+use crate::{CellState, PlayingState, PlayerTurn, TicTacToeCell, GameState, Player};
 
 pub struct BoardPlugin;
 
@@ -8,9 +8,9 @@ impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UiTheme>()
             .add_event::<CellClickedEvent>()
-            .add_system_set(SystemSet::on_enter(GameState::Local).with_system(setup_board))
+            .add_system_set(SystemSet::on_enter(PlayingState::Local).with_system(setup_board))
             .add_system_set(
-                SystemSet::on_update(WinnerState::GameOngoing)
+                SystemSet::on_update(GameState::GameOngoing)
                     .with_system(board_cell_interaction_system)
                     .with_system(on_cell_clicked),
             );

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{GameState, UiTheme, PlayerTurn, WinnerState};
+use crate::{PlayingState, UiTheme, PlayerTurn, GameState};
 
 #[derive(Component)]
 struct ReloadButton;
@@ -9,9 +9,9 @@ pub struct NewGamePlugin;
 
 impl Plugin for NewGamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::Local).with_system(setup_restart_button))
+        app.add_system_set(SystemSet::on_enter(PlayingState::Local).with_system(setup_restart_button))
             .add_system(reload_button_interactions)
-            .add_system_set(SystemSet::on_enter(GameState::NotPlaying).with_system(reload_game));
+            .add_system_set(SystemSet::on_enter(PlayingState::NotPlaying).with_system(reload_game));
     }
 }
 
@@ -89,14 +89,14 @@ fn reload_button_interactions(
         (&Interaction, &mut UiColor),
         (Changed<Interaction>, With<Button>, With<ReloadButton>),
     >,
-    mut game_state: ResMut<State<GameState>>,
+    mut game_state: ResMut<State<PlayingState>>,
 ) {
     for (interaction, mut color) in buttons.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
                 *color = theme.button;
                 game_state
-                    .set(GameState::NotPlaying)
+                    .set(PlayingState::NotPlaying)
                     .expect("Could not set game state.");
             }
             Interaction::Hovered => *color = theme.button_hovered,
@@ -108,20 +108,20 @@ fn reload_button_interactions(
 fn reload_game(
     mut commands: Commands,
     query: Query<Entity>,
+    mut playing_state: ResMut<State<PlayingState>>,
     mut game_state: ResMut<State<GameState>>,
-    mut winner_state: ResMut<State<WinnerState>>,
     mut player_turn: ResMut<State<PlayerTurn>>,
 ) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
-    game_state
-        .set(GameState::Local)
+    playing_state
+        .set(PlayingState::Local)
         .expect("Could not set game state.");
 
-    if winner_state.current() != &WinnerState::GameOngoing {
-        winner_state
-            .set(WinnerState::GameOngoing)
+    if game_state.current() != &GameState::GameOngoing {
+        game_state
+            .set(GameState::GameOngoing)
             .expect("Could not set game state.");
     }
 
