@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{PlayingState, UiTheme, PlayerTurn, GameState};
+use crate::{GameState, PlayerTurn, PlayingState, UiTheme};
 
 #[derive(Component)]
 struct ReloadButton;
@@ -9,9 +9,11 @@ pub struct NewGamePlugin;
 
 impl Plugin for NewGamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(PlayingState::Local).with_system(setup_restart_button))
-            .add_system(reload_button_interactions)
-            .add_system_set(SystemSet::on_enter(PlayingState::NotPlaying).with_system(reload_game));
+        app.add_system_set(
+            SystemSet::on_enter(PlayingState::Local).with_system(setup_restart_button),
+        )
+        .add_system(reload_button_interactions)
+        .add_system_set(SystemSet::on_enter(PlayingState::NotPlaying).with_system(reload_game));
     }
 }
 

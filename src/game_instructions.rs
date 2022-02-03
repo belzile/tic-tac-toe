@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{PlayingState, PlayerTurn, UiTheme, GameState, Player};
+use crate::{GameState, Player, PlayerTurn, PlayingState, UiTheme};
 
 #[derive(Component)]
 struct InstructionText;
@@ -9,11 +9,13 @@ pub struct GameInstructionsPlugin;
 
 impl Plugin for GameInstructionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(PlayingState::Local).with_system(setup_instructions))
-            .add_system_set(
-                SystemSet::on_update(PlayingState::Local)
-                    .with_system(update_instruction_on_state_change),
-            );
+        app.add_system_set(
+            SystemSet::on_enter(PlayingState::Local).with_system(setup_instructions),
+        )
+        .add_system_set(
+            SystemSet::on_update(PlayingState::Local)
+                .with_system(update_instruction_on_state_change),
+        );
     }
 }
 

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, TicTacToeCell, GameState, Player};
+use crate::{CellState, GameState, Player, TicTacToeCell};
 
 const WINNING_COMBINATIONS: [[usize; 3]; 8] = [
     // horizontal
@@ -20,9 +20,7 @@ pub struct WinningLogicPlugin;
 
 impl Plugin for WinningLogicPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_update(GameState::GameOngoing).with_system(is_game_over),
-        );
+        app.add_system_set(SystemSet::on_update(GameState::GameOngoing).with_system(is_game_over));
     }
 }
 

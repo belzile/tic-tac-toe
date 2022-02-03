@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, PlayingState, PlayerTurn, TicTacToeCell, GameState, Player};
+use crate::{CellState, GameState, Player, PlayerTurn, PlayingState, TicTacToeCell};
 
 pub struct BoardPlugin;
 

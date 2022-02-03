@@ -1,7 +1,7 @@
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum Player {
     X,
-    O
+    O,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
