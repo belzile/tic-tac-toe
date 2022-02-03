@@ -37,11 +37,11 @@ pub fn is_game_over(
 
     if is_winner(&cells, Player::X) {
         update_winner
-            .set(WinnerState::XWon)
+            .set(WinnerState::Won(Player::X))
             .expect("Cannot update winner state");
     } else if is_winner(&cells, Player::O) {
         update_winner
-            .set(WinnerState::OWon)
+            .set(WinnerState::Won(Player::O))
             .expect("Cannot update winner state");
     } else if is_draw(&cells) {
         update_winner

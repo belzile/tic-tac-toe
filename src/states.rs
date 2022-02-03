@@ -18,8 +18,7 @@ pub enum CellState {
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum WinnerState {
-    XWon,
-    OWon,
+    Won(Player),
     Draw,
     GameOngoing,
 }

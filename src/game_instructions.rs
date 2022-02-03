@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{GameState, PlayerTurn, UiTheme, WinnerState};
+use crate::{GameState, PlayerTurn, UiTheme, WinnerState, Player};
 
 #[derive(Component)]
 struct InstructionText;
@@ -78,8 +78,8 @@ fn update_instruction_on_state_change(
         let mut ui_text = instructions.single_mut();
 
         match winner_state.current() {
-            &WinnerState::XWon => ui_text.sections[0].value = "X Won!!!".to_string(),
-            &WinnerState::OWon => ui_text.sections[0].value = "O Won!!!".to_string(),
+            &WinnerState::Won(Player::X) => ui_text.sections[0].value = "X Won!!!".to_string(),
+            &WinnerState::Won(Player::O) => ui_text.sections[0].value = "O Won!!!".to_string(),
             &WinnerState::Draw => ui_text.sections[0].value = "Draw :-(".to_string(),
             &WinnerState::GameOngoing => (),
         }
