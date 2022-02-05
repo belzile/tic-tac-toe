@@ -10,11 +10,15 @@ pub struct GameInstructionsPlugin;
 impl Plugin for GameInstructionsPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_enter(PlayingState::Local).with_system(setup_instructions),
+            SystemSet::on_enter(PlayingState::Loading).after("clear").with_system(setup_instructions),
         )
         .add_system_set(
-            SystemSet::on_update(PlayingState::Local)
+            SystemSet::on_update(PlayingState::Playing)
                 .with_system(update_instruction_on_state_change),
+        )
+        .add_system_set(
+            SystemSet::on_enter(PlayingState::NotPlaying)
+                .with_system(set_winning_state),
         );
     }
 }
@@ -64,7 +68,6 @@ fn setup_instructions(mut commands: Commands, theme: Res<UiTheme>, asset_server:
 
 fn update_instruction_on_state_change(
     player_turn_state: Res<State<PlayerTurn>>,
-    game_state: Res<State<GameState>>,
     mut instructions: Query<&mut Text, With<InstructionText>>,
 ) {
     if player_turn_state.is_changed() {
@@ -75,15 +78,15 @@ fn update_instruction_on_state_change(
         let mut ui_text = instructions.single_mut();
         ui_text.sections[0].value = next_text.to_string();
     }
+}
 
-    if game_state.is_changed() {
-        let mut ui_text = instructions.single_mut();
+fn set_winning_state(game_state: Res<State<GameState>>, mut instructions: Query<&mut Text, With<InstructionText>>) {
+    let mut ui_text = instructions.single_mut();
 
-        match game_state.current() {
-            &GameState::Won(Player::X) => ui_text.sections[0].value = "X Won!!!".to_string(),
-            &GameState::Won(Player::O) => ui_text.sections[0].value = "O Won!!!".to_string(),
-            &GameState::Draw => ui_text.sections[0].value = "Draw :-(".to_string(),
-            &GameState::GameOngoing => (),
-        }
+    match game_state.current() {
+        &GameState::Won(Player::X) => ui_text.sections[0].value = "X Won!!!".to_string(),
+        &GameState::Won(Player::O) => ui_text.sections[0].value = "O Won!!!".to_string(),
+        &GameState::Draw => ui_text.sections[0].value = "Draw :-(".to_string(),
+        &GameState::GameOngoing => (),
     }
 }

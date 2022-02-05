@@ -26,5 +26,6 @@ pub enum GameState {
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum PlayingState {
     NotPlaying,
-    Local,
+    Loading,
+    Playing,
 }

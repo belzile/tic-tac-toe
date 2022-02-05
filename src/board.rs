@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, GameState, Player, PlayerTurn, PlayingState, TicTacToeCell};
+use crate::{CellState, CheckWinnerEvent, Player, PlayerTurn, PlayingState, TicTacToeCell};
 
 pub struct BoardPlugin;
 
@@ -8,9 +8,9 @@ impl Plugin for BoardPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UiTheme>()
             .add_event::<CellClickedEvent>()
-            .add_system_set(SystemSet::on_enter(PlayingState::Local).with_system(setup_board))
+            .add_system_set(SystemSet::on_enter(PlayingState::Loading).after("clear").with_system(setup_board))
             .add_system_set(
-                SystemSet::on_update(GameState::GameOngoing)
+                SystemSet::on_update(PlayingState::Playing)
                     .with_system(board_cell_interaction_system)
                     .with_system(on_cell_clicked),
             );
@@ -74,6 +74,7 @@ pub fn on_cell_clicked(
     mut cell_query: Query<(&mut TicTacToeCell, &Children)>,
     mut cell_text_query: Query<&mut Text>,
     mut player_turn_state: ResMut<State<PlayerTurn>>,
+    mut check_winner: EventWriter<CheckWinnerEvent>,
 ) {
     let player_turn = player_turn_state.current().clone();
 
@@ -85,6 +86,7 @@ pub fn on_cell_clicked(
         update_cell_state(&mut cell, &player_turn);
         update_cell_text(&mut cell_text_query, children, &player_turn);
         update_player_turn(&mut player_turn_state);
+        check_winner.send(CheckWinnerEvent);
     }
 }
 

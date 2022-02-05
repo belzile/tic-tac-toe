@@ -23,12 +23,19 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .insert_resource(ClearColor(Color::rgb(0.04, 0.04, 0.04)))
-        .add_state(PlayingState::Local)
+        .add_state(PlayingState::Loading)
         .add_state(PlayerTurn::X)
         .add_state(GameState::GameOngoing)
         .add_plugin(BoardPlugin)
         .add_plugin(WinningLogicPlugin)
         .add_plugin(GameInstructionsPlugin)
         .add_plugin(NewGamePlugin)
+        .add_system_set(SystemSet::on_update(PlayingState::Loading).with_system(start_game))
         .run();
+}
+
+fn start_game(mut playing_state: ResMut<State<PlayingState>>) {
+    playing_state
+        .set(PlayingState::Playing)
+        .expect("Unable to set playing state.");
 }

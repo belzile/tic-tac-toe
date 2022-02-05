@@ -10,10 +10,10 @@ pub struct NewGamePlugin;
 impl Plugin for NewGamePlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
-            SystemSet::on_enter(PlayingState::Local).with_system(setup_restart_button),
+            SystemSet::on_enter(PlayingState::Loading).after("clear").with_system(setup_restart_button),
         )
         .add_system(reload_button_interactions)
-        .add_system_set(SystemSet::on_enter(PlayingState::NotPlaying).with_system(reload_game));
+        .add_system_set(SystemSet::on_enter(PlayingState::Loading).label("clear").with_system(reload_game));
     }
 }
 
@@ -98,7 +98,7 @@ fn reload_button_interactions(
             Interaction::Clicked => {
                 *color = theme.button;
                 game_state
-                    .set(PlayingState::NotPlaying)
+                    .set(PlayingState::Loading)
                     .expect("Could not set game state.");
             }
             Interaction::Hovered => *color = theme.button_hovered,
@@ -110,16 +110,12 @@ fn reload_button_interactions(
 fn reload_game(
     mut commands: Commands,
     query: Query<Entity>,
-    mut playing_state: ResMut<State<PlayingState>>,
     mut game_state: ResMut<State<GameState>>,
     mut player_turn: ResMut<State<PlayerTurn>>,
 ) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }
-    playing_state
-        .set(PlayingState::Local)
-        .expect("Could not set game state.");
 
     if game_state.current() != &GameState::GameOngoing {
         game_state

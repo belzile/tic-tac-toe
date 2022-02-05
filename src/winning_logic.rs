@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{CellState, GameState, Player, TicTacToeCell};
+use crate::{CellState, GameState, Player, PlayingState, TicTacToeCell};
 
 const WINNING_COMBINATIONS: [[usize; 3]; 8] = [
     // horizontal
@@ -18,16 +18,26 @@ const WINNING_COMBINATIONS: [[usize; 3]; 8] = [
 
 pub struct WinningLogicPlugin;
 
+pub struct CheckWinnerEvent;
+
 impl Plugin for WinningLogicPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_update(GameState::GameOngoing).with_system(is_game_over));
+        app.add_event::<CheckWinnerEvent>()
+            .add_system_set(SystemSet::on_update(PlayingState::Playing).with_system(check_winner));
     }
 }
 
-pub fn is_game_over(
+pub fn check_winner(
+    mut check_winner_events: EventReader<CheckWinnerEvent>,
     cells_query: Query<&TicTacToeCell>,
     mut update_winner: ResMut<State<GameState>>,
+    mut playing_state: ResMut<State<PlayingState>>,
 ) {
+    let events: Vec<&CheckWinnerEvent> = check_winner_events.iter().collect();
+    if events.len() == 0 {
+        return;
+    }
+
     let mut cells = vec![CellState::Empty; 9];
     for cell in cells_query.iter() {
         cells[cell.cell_id as usize] = cell.state.clone();
@@ -37,14 +47,23 @@ pub fn is_game_over(
         update_winner
             .set(GameState::Won(Player::X))
             .expect("Cannot update winner state");
+        playing_state
+            .set(PlayingState::NotPlaying)
+            .expect("Cannot set playing state");
     } else if is_winner(&cells, Player::O) {
         update_winner
             .set(GameState::Won(Player::O))
             .expect("Cannot update winner state");
+        playing_state
+            .set(PlayingState::NotPlaying)
+            .expect("Cannot set playing state");
     } else if is_draw(&cells) {
         update_winner
             .set(GameState::Draw)
             .expect("Cannot update winner state");
+        playing_state
+            .set(PlayingState::NotPlaying)
+            .expect("Cannot set playing state");
     }
 }
 
